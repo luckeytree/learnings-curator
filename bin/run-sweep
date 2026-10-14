@@ -2,6 +2,10 @@
 # One learnings sweep, headless. The scheduled job calls this; you can too, to run one now.
 # The session can read your memory folders and git history and edit this repo. Anything not
 # on the allow-list below is denied (dontAsk), so it can't wander outside that.
+#
+# The global file is guarded here, in bash, not by the model's instructions: it's symlinked
+# into ~/.claude, so any edit is live at once. If the sweep changed it by any route, the change
+# is moved to inbox/proposed-global.md and the file restored as soon as the session ends.
 set -uo pipefail
 cd "$(dirname "$0")/.." || exit 1
 REPO="$(pwd)"
@@ -9,15 +13,37 @@ CLAUDE_BIN="${CLAUDE_BIN:-$(command -v claude)}"
 [ -x "$CLAUDE_BIN" ] || { echo "claude not found; set CLAUDE_BIN or put claude on PATH" >&2; exit 1; }
 
 echo "== sweep $(date '+%Y-%m-%d %H:%M') on $(hostname -s) =="
+BEFORE="$(mktemp)"; cp global/CLAUDE.md "$BEFORE"
 "$CLAUDE_BIN" -p "Run the learnings-sweep skill." \
   --add-dir "$HOME/.claude/projects" \
   --permission-mode dontAsk \
-  --allowedTools "Read Grep Glob Edit Write Agent Skill Bash(git *) Bash(bin/check.sh*) Bash(hostname*) Bash(date*) Bash(ls *) Bash(find *)" \
+  --allowedTools "Read Grep Glob Edit Write Agent Skill Bash(git *) Bash(bin/check.sh*) Bash(hostname*) Bash(date*) Bash(ls *)" \
   </dev/null
 status=$?
 
+guarded=0
+if ! cmp -s "$BEFORE" global/CLAUDE.md; then
+  guarded=1
+  {
+    echo
+    echo "## From the $(date +%Y-%m-%d) sweep on $(hostname -s): edited global/CLAUDE.md directly"
+    echo "The sweep isn't allowed to change the global file, so this was moved here. Approve or"
+    echo "decline it at your next /sync-learnings."
+    echo '```diff'
+    diff -u "$BEFORE" global/CLAUDE.md | tail -n +3
+    echo '```'
+  } >> inbox/proposed-global.md
+  cp "$BEFORE" global/CLAUDE.md
+  git add global/CLAUDE.md inbox/proposed-global.md
+  git commit -q -m "sweep guard: moved a direct global edit to inbox/proposed-global.md" \
+    || echo "guard: restored global/CLAUDE.md but couldn't commit; see git status" >&2
+  git rev-parse -q --verify '@{u}' >/dev/null && { git push -q || echo "guard: push failed" >&2; }
+fi
+rm -f "$BEFORE"
+
 report=$(ls -t "$REPO"/notes/reports/*.md 2>/dev/null | head -1)
 msg="Sweep finished. Report: ${report:-none written}"
+[ "$guarded" -eq 1 ] && msg="$msg (a global edit was moved to inbox for your OK)"
 [ "$status" -ne 0 ] && msg="Sweep failed (exit $status). See the sweep log."
 echo "$msg"
 if command -v osascript >/dev/null 2>&1; then

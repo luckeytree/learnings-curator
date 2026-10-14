@@ -17,7 +17,7 @@ inventing reasons. A manual `/sync-learnings` after a heavy session still beats 
 
 The last sweep's date is in the newest `notes/reports/*-<hostname -s>.md` (this machine's;
 none means look back 7 days).
-- Memory files under `~/.claude/projects/*/memory/` modified since then. Feedback-type memories
+- Memory files under `~/.claude/projects/*/memory/` modified since then (`ls -lt` shows dates). Feedback-type memories
   matter most. The folder name tells you the project.
 - `git log --since=<date>` in each of those projects, where it's a repo. Don't decode the
   folder name into a path (hyphens make it ambiguous); read the `cwd` field from the newest
@@ -36,7 +36,8 @@ one-line report and stop.
 Send the list with the words `SCHEDULED RUN`. In that mode the curator may edit guides, skills,
 and notes, but any change to `global/CLAUDE.md` goes to `inbox/proposed-global.md` for the
 operator to approve. Unattended edits to the always-on file are how a bad rule spreads to every
-session before anyone reads it.
+session before anyone reads it. `bin/run-sweep` enforces this after you finish: a direct edit gets moved
+to the inbox and the file restored, so editing it directly only adds noise.
 
 ## 4. Write the report
 
