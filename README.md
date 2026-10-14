@@ -122,8 +122,23 @@ from the past week, lets the curator file what it finds, and writes a short repo
 - **It can't see why a session broke a rule.** Only the live session knows that. After a heavy
   session, a manual sync still catches more.
 
-`bin/schedule-sweep --status` shows whether it's on. `--remove` turns it off. Each machine reads
-only its own memory folders, so run it on every machine you use. `bin/run-sweep` runs one now.
+**Read this before you turn it on.** The sweep runs on your computer's own scheduler (launchd on
+a Mac, cron on Linux), not in the cloud. It only runs if your machine is on and awake at that
+moment:
+- **Pick a time you're actually at your computer**, like late in the workday. The default is
+  Fridays at 3pm; set your own with `SWEEP_WEEKDAY=4 SWEEP_HOUR=16 bin/schedule-sweep` (0 is
+  Sunday).
+- **Laptop closed or asleep:** on a Mac it runs when the machine next wakes, which may be the
+  middle of something else. **Shut down:** that week is skipped. On Linux, asleep or off means
+  skipped.
+- **It uses your normal Claude login and usage.** If your login has expired or your usage
+  window is used up, the run fails. You get a notification saying so, and the log says why.
+- **One schedule per machine.** Each machine reads only its own memory folders, so set it up on
+  every machine you work on.
+- **Corporate networks** that inspect traffic can cut off long runs.
+
+`bin/schedule-sweep --status` shows whether it's on and when it last ran, so a skipped week
+doesn't go unnoticed. `--remove` turns it off. `bin/run-sweep` runs one now.
 
 **Cost.** In my own use, a curator run took 1 to 5 million tokens, mostly cache reads, about 2
 to 7% of the tokens in the session it followed. A weekly sweep has no session to compare against;

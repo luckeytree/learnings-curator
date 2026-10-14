@@ -63,7 +63,21 @@ grew without anyone pruning them. Those are the first candidates.
    > It costs about one curator run's worth of tokens a week.
    > You can still run `/sync-learnings` any time, either way. Want the weekly sweep?
 
-   On yes, run `bin/schedule-sweep` and show its output. On no, say how to turn it on later.
+   On yes, **before scheduling, make sure they know how it runs.** It's their computer's own
+   scheduler, not a service, so it only runs if the machine is on and awake at that moment. Say
+   so plainly, then ask which day and time they're usually at this machine with the lid open
+   (late in the workday works well). Tell them:
+   - **Laptop closed or asleep:** on a Mac it runs when the machine next wakes, possibly in the
+     middle of something. **Shut down:** that week is skipped. On Linux, asleep or off means
+     skipped.
+   - It uses their normal Claude login and usage. An expired login or a used-up usage window
+     means a failed run (they get a notification saying so).
+   - It only sees this machine's memory folders, so each machine they use needs its own schedule.
+   - Corporate network security can cut off long runs.
+
+   Then run `SWEEP_WEEKDAY=<0-6, 0 = Sunday> SWEEP_HOUR=<0-23> bin/schedule-sweep` with their
+   answer and show its output. Mention `bin/schedule-sweep --status`, which shows when it last
+   ran, so a skipped week is visible. On no, say how to turn it on later.
 
 ## Step 1: Draft the candidate list (you)
 

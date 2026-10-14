@@ -18,6 +18,25 @@ LABEL="com.learnings-curator.sweep"
 DAYS=(Sundays Mondays Tuesdays Wednesdays Thursdays Fridays Saturdays)
 TAG="# learnings-curator sweep"
 
+# The last "== sweep <date>" header in the log is the last time a sweep actually started.
+last_run() {
+  local l; l=$(grep '^== sweep ' "$LOG" 2>/dev/null | tail -1 | sed -e 's/^== sweep //' -e 's/ ==$//')
+  echo "last ran: ${l:-never}"
+  echo "log: $LOG"
+}
+limits() {
+  cat <<'TXT'
+
+How this runs: on this computer's own scheduler, not in the cloud.
+  - Your machine must be on and awake at that time. Pick a time you're usually working.
+  - Asleep or lid closed: macOS runs it when the machine wakes; Linux skips it.
+  - Shut down: that week is skipped.
+  - It uses your Claude login and usage. Expired login or no usage left = a failed run.
+  - It sees only this machine's memory folders. Set it up on each machine you use.
+  - Check it's actually running with: bin/schedule-sweep --status
+TXT
+}
+
 case "$DAY" in [0-6]) ;; *) echo "SWEEP_WEEKDAY must be 0-6 (0 = Sunday)" >&2; exit 2;; esac
 case "$HOUR" in [0-9]|1[0-9]|2[0-3]) ;; *) echo "SWEEP_HOUR must be 0-23" >&2; exit 2;; esac
 
@@ -26,7 +45,8 @@ if [ "$(uname)" = "Darwin" ]; then
   LOG="$HOME/Library/Logs/learnings-curator-sweep.log"
   case "${1:-}" in
     --status)
-      if [ -f "$PLIST" ]; then echo "on  ($PLIST)"; echo "log: $LOG"; else echo "off"; fi; exit 0;;
+      if [ -f "$PLIST" ]; then echo "on  ($PLIST)"; else echo "off"; fi
+      last_run; exit 0;;
     --remove)
       launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
       rm -f "$PLIST"; echo "off. Run /sync-learnings by hand whenever you like."; exit 0;;
@@ -63,7 +83,8 @@ else
   LOG="$HOME/.cache/learnings-curator/sweep.log"
   case "${1:-}" in
     --status)
-      if crontab -l 2>/dev/null | grep -qF "$TAG"; then echo "on"; echo "log: $LOG"; else echo "off"; fi; exit 0;;
+      if crontab -l 2>/dev/null | grep -qF "$TAG"; then echo "on"; else echo "off"; fi
+      last_run; exit 0;;
     --remove)
       crontab -l 2>/dev/null | grep -vF "$TAG" | crontab -
       echo "off. Run /sync-learnings by hand whenever you like."; exit 0;;
@@ -75,4 +96,6 @@ else
   { crontab -l 2>/dev/null | grep -vF "$TAG"; echo "$line"; } | crontab -
   printf 'on: weekly, %s at %02d:00. Log: %s\n' "${DAYS[$DAY]}" "$HOUR" "$LOG"
 fi
+limits
+echo
 echo "To run one now: bin/run-sweep. You can still run /sync-learnings any time."
