@@ -29,6 +29,7 @@ limits() {
 
 How this runs: on this computer's own scheduler, not in the cloud.
   - Your machine must be on and awake at that time. Pick a time you're usually working.
+  - The clone must live outside OneDrive / iCloud / Dropbox: macOS blocks background jobs there.
   - Asleep or lid closed: macOS runs it when the machine wakes; Linux skips it.
   - Shut down: that week is skipped.
   - It uses your Claude login and usage. Expired login or no usage left = a failed run.
@@ -46,10 +47,24 @@ if [ "$(uname)" = "Darwin" ]; then
   case "${1:-}" in
     --status)
       if [ -f "$PLIST" ]; then echo "on  ($PLIST)"; else echo "off"; fi
+      code=$(launchctl print "gui/$(id -u)/$LABEL" 2>/dev/null | sed -n 's/.*last exit code = //p' | head -1)
+      [ -n "$code" ] && [ "$code" != "0" ] && [ "$code" != "(never exited)" ] && echo "LAST RUN FAILED (exit $code): see the log"
       last_run; exit 0;;
     --remove)
       launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
       rm -f "$PLIST"; echo "off. Run /sync-learnings by hand whenever you like."; exit 0;;
+  esac
+  # macOS blocks background jobs from reading cloud-synced folders (OneDrive, iCloud Drive,
+  # Dropbox, Google Drive all live under these paths). A schedule installed from one fails every
+  # week with "Operation not permitted" and nobody is watching. Tested 2026-10-14.
+  case "$REPO/" in
+    "$HOME/Library/CloudStorage/"*|"$HOME/Library/Mobile Documents/"*)
+      echo "This clone is in a cloud-synced folder:" >&2
+      echo "  $REPO" >&2
+      echo "macOS won't let a background job read it, so the sweep would fail every time." >&2
+      echo "Move the clone somewhere local (for example ~/Developer), run bin/link from the new" >&2
+      echo "spot, then run this again. /sync-learnings by hand still works where it is." >&2
+      exit 1;;
   esac
   CLAUDE_BIN="$(command -v claude)" || { echo "claude not found on PATH" >&2; exit 1; }
   [ "${1:-}" = "--print" ] && PLIST=/dev/stdout

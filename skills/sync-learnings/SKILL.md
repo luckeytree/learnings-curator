@@ -73,6 +73,8 @@ grew without anyone pruning them. Those are the first candidates.
    - It uses their normal Claude login and usage. An expired login or a used-up usage window
      means a failed run (they get a notification saying so).
    - It only sees this machine's memory folders, so each machine they use needs its own schedule.
+   - On a Mac, the clone can't live in OneDrive, iCloud Drive, or Dropbox: background jobs can't
+     read those folders. `bin/schedule-sweep` refuses there; move the clone first.
    - Corporate network security can cut off long runs.
 
    Then run `SWEEP_WEEKDAY=<0-6, 0 = Sunday> SWEEP_HOUR=<0-23> bin/schedule-sweep` with their

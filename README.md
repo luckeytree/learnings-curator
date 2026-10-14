@@ -135,6 +135,9 @@ moment:
   window is used up, the run fails. You get a notification saying so, and the log says why.
 - **One schedule per machine.** Each machine reads only its own memory folders, so set it up on
   every machine you work on.
+- **Keep the clone out of OneDrive, iCloud Drive, and Dropbox.** macOS blocks background jobs from
+  reading cloud-synced folders, so a sweep scheduled from one fails every time.
+  `bin/schedule-sweep` refuses to install there and says why.
 - **Corporate networks** that inspect traffic can cut off long runs.
 
 `bin/schedule-sweep --status` shows whether it's on and when it last ran, so a skipped week
