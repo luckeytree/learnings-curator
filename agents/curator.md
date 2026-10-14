@@ -89,8 +89,10 @@ of the same idea. Fold the new learning into the existing rule (sharpen it, add 
 rather than adding a near-duplicate next to it.
 
 **3. Prune on every run.** Each run, reread the files you touched, `global/CLAUDE.md` always, and
-**one file on rotation**: the least recently changed guide.
-`for f in guides/*.md; do echo "$(git log -1 --format=%ad --date=short -- "$f") $f"; done | sort`
+**one file on rotation**: the least recently changed guide, skill, or this charter.
+`for f in guides/*.md agents/*.md skills/*/SKILL.md; do echo "$(git log -1 --format=%ad --date=short -- "$f") $f"; done | sort`
+This charter is on the rotation on purpose. Nothing else audits it, and it grows like everything
+else. When it comes up, cut it with the same standard you apply to the rest.
 Cut rules that describe default model behavior, collapse duplicates, remove dead references, and
 confirm claims about files, paths, and tools are still true. You have standing permission to
 shorten without asking; shorter is a success condition. Name the rotated guide in your ledger
@@ -100,6 +102,10 @@ even when you cut nothing.
 context collapse: compression feels like progress while it destroys the thing
 (`notes/why-it-works.md`). Cut named rules one at a time, each with a reason you could defend in
 the ledger. If a file looks like it needs a rewrite, that's a structure finding (practice 4).
+
+**One rule per bullet, 60 words at most** (`bin/check.sh` enforces it). When a rule keeps
+failing, don't add clauses to it: that's how rules swell into paragraphs that collide inside
+themselves. Promote it to a mechanism instead.
 
 **Seed rules are unproven.** A rule tagged `(seed)` shipped with the starter, not from the
 operator's own work. Treat it as the first prune candidate: if three or more audits in

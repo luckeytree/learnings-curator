@@ -13,8 +13,14 @@ cd "$(dirname "$0")/.." || exit 1
 # Change them if your experience says otherwise. That's your call, not the curator's.
 GLOBAL_WORDS=1050
 GLOBAL_RULES=30
+# Without this, the rule cap stops binding: rules get packed into fewer, fatter bullets, and the
+# collisions move inside them where no one sees them.
+BULLET_WORDS=60
 # Guides are opened situationally. Soft: past this, ask the split question.
 SITUATIONAL_WORDS=1400
+# The curator's charter and the loop's skills load whenever they run, and the curator never
+# budgets itself. Soft: past this, the charter is due a prune like any other file.
+MACHINERY_WORDS=2200
 
 fail=0; warn=0
 red()  { printf '\033[31m%s\033[0m\n' "$*"; }
@@ -49,6 +55,14 @@ gr=$(grep -cE '^[[:space:]]*-[[:space:]]' global/CLAUDE.md | tr -d ' ')
 printf '   words %4s / %s\n   rules %4s / %s\n' "$gw" "$GLOBAL_WORDS" "$gr" "$GLOBAL_RULES"
 [ "$gw" -gt "$GLOBAL_WORDS" ] && { red "   FAIL over word budget by $((gw-GLOBAL_WORDS)): a new rule must displace or absorb a weaker one"; fail=1; }
 [ "$gr" -gt "$GLOBAL_RULES" ] && { red "   FAIL over rule budget by $((gr-GLOBAL_RULES)): merge, don't append"; fail=1; }
+# Per-bullet: a bullet runs from its "- " line through indented continuation lines.
+fat=$(awk -v cap="$BULLET_WORDS" '
+  function flush() { if (n > cap) printf "   line %d: %d words: %s...\n", start, n, head; n = 0 }
+  /^[[:space:]]*-[[:space:]]/ { flush(); start = NR; n = NF - 1; head = substr($0, 1, 50); next }
+  /^[[:space:]]+[^[:space:]]/ && n > 0 { n += NF; next }
+  { flush() }
+  END { flush() }' global/CLAUDE.md)
+[ -n "$fat" ] && { red "   FAIL bullets over ${BULLET_WORDS} words: split them or cut them"; red "$fat"; fail=1; }
 [ "$fail" -eq 0 ] && ok "   within budget"
 
 # --- 2. Soft budget: guides and path-scoped rules ---------------------------------------
@@ -65,6 +79,17 @@ for f in guides/*.md rules/*.md; do
   fi
 done
 [ "$n" -eq 0 ] && echo "   (no guides yet: the curator creates them as learnings arrive)"
+
+echo
+echo "== the loop's own files (soft ${MACHINERY_WORDS}w) =="
+for f in agents/*.md skills/*/SKILL.md; do
+  w=$(words "$f")
+  if [ "$w" -gt "$MACHINERY_WORDS" ]; then
+    yell "$(printf '   %-40s %5sw  the curator is due its own prune' "$f" "$w")"; warn=$((warn+1))
+  else
+    printf '   %-40s %5sw\n' "$f" "$w"
+  fi
+done
 
 # --- 3. Dangling relative links ---------------------------------------------------------
 echo
