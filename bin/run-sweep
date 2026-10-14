@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# One learnings sweep, headless. The scheduled job calls this; you can too, to run one now.
+# The session can read your memory folders and git history and edit this repo. Anything not
+# on the allow-list below is denied (dontAsk), so it can't wander outside that.
+set -uo pipefail
+cd "$(dirname "$0")/.." || exit 1
+REPO="$(pwd)"
+CLAUDE_BIN="${CLAUDE_BIN:-$(command -v claude)}"
+[ -x "$CLAUDE_BIN" ] || { echo "claude not found; set CLAUDE_BIN or put claude on PATH" >&2; exit 1; }
+
+echo "== sweep $(date '+%Y-%m-%d %H:%M') on $(hostname -s) =="
+"$CLAUDE_BIN" -p "Run the learnings-sweep skill." \
+  --add-dir "$HOME/.claude/projects" \
+  --permission-mode dontAsk \
+  --allowedTools "Read Grep Glob Edit Write Agent Skill Bash(git *) Bash(bin/check.sh*) Bash(hostname*) Bash(date*) Bash(ls *) Bash(find *)" \
+  </dev/null
+status=$?
+
+report=$(ls -t "$REPO"/notes/reports/*.md 2>/dev/null | head -1)
+msg="Sweep finished. Report: ${report:-none written}"
+[ "$status" -ne 0 ] && msg="Sweep failed (exit $status). See the sweep log."
+echo "$msg"
+if command -v osascript >/dev/null 2>&1; then
+  osascript -e "display notification \"$msg\" with title \"Learnings Curator\"" >/dev/null 2>&1 || true
+elif command -v notify-send >/dev/null 2>&1; then
+  notify-send "Learnings Curator" "$msg" || true
+fi
+exit "$status"

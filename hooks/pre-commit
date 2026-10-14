@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Runs the repo's budgets and integrity checks before every commit.
+# Enable once per clone:  git config core.hooksPath hooks
+exec "$(git rev-parse --show-toplevel)/bin/check.sh"

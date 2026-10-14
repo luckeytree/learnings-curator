@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Installer for learnings-curator. Symlinks the repo into ~/.claude/ so a `git pull` updates
+# your live setup with no reinstall. Safe to re-run after a pull that adds a skill or agent,
+# or after moving the clone.
+#
+# It never deletes anything. A real file already sitting where a link goes (your existing
+# ~/.claude/CLAUDE.md, an agent or skill with the same name) is MOVED to
+# ~/.claude/pre-curator-backup/<timestamp>/ first. The first /sync-learnings reads your old
+# CLAUDE.md from there. Other files in ~/.claude/rules, agents, and skills are left alone.
+#
+# Run from anywhere inside the clone:  bin/link
+# Windows / Git Bash: needs Developer Mode on and MSYS=winsymlinks:nativestrict set, or ln -s
+# quietly makes copies. This script checks the result and warns if it did.
+set -uo pipefail
+shopt -s nullglob
+cd "$(dirname "$0")/.." || exit 1
+REPO="$(pwd)"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+CH="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"   # Claude Code's config dir
+BACKUP="$CH/pre-curator-backup/$STAMP"
+
+mkdir -p "$CH/agents" "$CH/skills" "$CH/rules"
+
+moved=0
+link() {  # link <target> <linkpath>
+  local target="$1" linkpath="$2"
+  if [ -e "$linkpath" ] && [ ! -L "$linkpath" ]; then
+    local rel="${linkpath#"$CH/"}"
+    mkdir -p "$BACKUP/$(dirname "$rel")"
+    mv "$linkpath" "$BACKUP/$rel" || { printf '\033[31m  could not back up %s; skipped\033[0m\n' "$linkpath"; return 1; }
+    printf '  backed up  %s\n' "$rel"
+    moved=1
+  fi
+  ln -sfn "$target" "$linkpath"
+  if [ ! -L "$linkpath" ]; then
+    printf '\033[31m  not a link: %s. Symlinks fell back to a copy; see Requirements in the README.\033[0m\n' "$linkpath"
+    return 1
+  fi
+}
+
+bad=0
+link "$REPO/global/CLAUDE.md" "$CH/CLAUDE.md" || bad=1
+for f in "$REPO"/rules/*.md;  do link "$f" "$CH/rules/$(basename "$f")"  || bad=1; done
+for f in "$REPO"/agents/*.md; do link "$f" "$CH/agents/$(basename "$f")" || bad=1; done
+for d in "$REPO"/skills/*/;   do link "${d%/}" "$CH/skills/$(basename "${d%/}")" || bad=1; done
+
+[ "$moved" -eq 1 ] && printf '\nYour previous files are in %s\n' "$BACKUP"
+if [ "$bad" -eq 0 ]; then
+  printf '\033[32mlinked OK.\033[0m If you haven'"'"'t yet, run: git config core.hooksPath hooks\n'
+  printf 'Then open Claude Code anywhere and run /sync-learnings\n'
+else
+  printf '\033[33msome paths failed; fix the above and re-run\033[0m\n'
+fi
+exit "$bad"

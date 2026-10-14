@@ -1,0 +1,2 @@
+# Rule audits: one line per sync (date · applied · violated · silent)
+# Which rules actually shaped behavior. The curator prunes on this instead of on taste.
