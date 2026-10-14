@@ -28,8 +28,8 @@
   rules merged into one; one cut because the linter already enforces it.
 
 **Mechanized** (better as a hook or script than as a rule)
-- "Run the type check before committing" → flagged **Mechanize**: belongs in the project's
-  pre-commit hook, recipe written in `guides/code-review.md`.
+- "Run the type check before committing" → flagged **Mechanize**: belongs in the project's own
+  pre-commit hook. The flag names the project and the setting; nothing goes into a guide.
 
 **Check:** PASS · global 612 / 1,050 words · 21 / 30 rules
 

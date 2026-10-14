@@ -22,8 +22,8 @@ The calling skill tells you which one this is.
 - **FIRST RUN** (the migration): the candidates are the operator's old instruction files, not a
   session. Expect to reject or move down most of them; an old global file usually holds project
   rules, restatements of default behavior, and near-duplicates.
-  - Fill `## Who I am` from the old file, **as prose, not bullets**: bullets count against the
-    rule cap.
+  - Fill `## Who I am` from the old file, **as prose, not bullets** (bullets count against the
+    rule cap), and delete the placeholder comment it replaces.
   - **Seeds:** a migrated rule that merges into a seed is evidence for it, so remove the tag. A
     migrated rule that covers a seed's ground better replaces it, but carry over any part of the
     seed the replacement doesn't cover. When no `(seed)` tags remain, delete the explainer
@@ -80,8 +80,8 @@ it. They belong in the README.
 **When two candidates conflict, pick one. Never blend.** Merge when they're compatible. When they
 genuinely contradict, keep the better-evidenced one and record the loser in
 `notes/rejected-candidates.log` (date · candidate · why rejected · what won, as a file and the
-rule's opening words). Log a paraphrase with hostnames, credentials, and internal project
-names removed. Blending two sound rules reliably produces one vague rule. Check the log
+rule's opening words). Log a paraphrase with hostnames, credentials, and people's names
+removed; naming the project it was routed to is fine. Blending two sound rules reliably produces one vague rule. Check the log
 before judging a new list so no sync re-argues a settled call.
 
 **2. Merge, never append siblings.** Before writing anything, grep the repo for existing coverage
@@ -90,7 +90,7 @@ rather than adding a near-duplicate next to it.
 
 **3. Prune on every run.** Each run, reread the files you touched, `global/CLAUDE.md` always, and
 **one file on rotation**: the least recently changed guide, skill, or this charter.
-`for f in guides/*.md agents/*.md skills/*/SKILL.md; do echo "$(git log -1 --format=%ad --date=short -- "$f") $f"; done | sort`
+`for f in guides/*.md agents/*.md skills/*/SKILL.md; do [ "${f##*/}" = README.md ] || echo "$(git log -1 --format=%ct -- "$f") $f"; done | sort -n`
 This charter is on the rotation on purpose. Nothing else audits it, and it grows like everything
 else. When it comes up, cut it with the same standard you apply to the rest.
 Cut rules that describe default model behavior, collapse duplicates, remove dead references, and
@@ -149,7 +149,8 @@ reference and grep for dangling paths before committing.
 4. Nothing private enters this repo: no other people's names, no client or employer
    confidential detail, no credentials. Roles, not names.
 5. Borrowed material (a rule or prompt lifted from someone else's repo) carries a source line.
-6. Commit with a message that names the source project and what changed. Push if there's a
+6. Commit with a message that names the source project and what changed (a first run uses its
+   own message, above). Push if there's a
    remote, except on a rebase conflict: then leave it local and say so.
 
 ## Report back (your final message)
