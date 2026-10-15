@@ -135,6 +135,32 @@ for f in rules/*.md; do
   fi
 done
 
+# --- 6. Soft: every guide section says what enforces it -------------------------------
+# Each "## " section of a guide ends with "*Enforced by:*" and the mechanism (a hook, a check, an
+# agent, a skill step), or "prose only" when nothing catches a miss but the reader. A guide with
+# no "## " sections counts as one section. The curator adds the line as each file rotates.
+echo
+echo "== enforcement footers (soft) =="
+missing_any=0
+for f in guides/*.md; do
+  [ -f "$f" ] || continue
+  [ "${f##*/}" = README.md ] && continue
+  r=$(awk '
+    /^```/ { fence = !fence; next }
+    fence { next }
+    /^## / { if (n && cur) have++; if (n && cp) prose++; n++; cur = 0; cp = 0; next }
+    /^\*Enforced by:\*/ { cur = 1; cp = ($0 ~ /^\*Enforced by:\* prose only\.?[[:space:]]*$/) }
+    END { if (cur) have++; if (cp) prose++; if (n == 0) n = 1; printf "%d %d %d", have+0, n+0, prose+0 }' "$f")
+  set -- $r
+  if [ "$1" -lt "$2" ]; then
+    missing_any=1
+    printf '   %-40s %2s/%-2s sections\n' "$f" "$1" "$2"
+  else
+    printf '   %-40s %2s/%-2s sections, %s wholly prose only\n' "$f" "$1" "$2" "$3"
+  fi
+done
+[ "$missing_any" -eq 1 ] && { yell "   sections without an *Enforced by:* line: add it when the file rotates"; warn=$((warn+1)); }
+
 # --- Verdict ----------------------------------------------------------------------------
 echo
 if [ "$fail" -ne 0 ]; then red "FAIL: fix the above before committing."; exit 1; fi

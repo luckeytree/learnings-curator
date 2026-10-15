@@ -96,7 +96,9 @@ else. When it comes up, cut it with the same standard you apply to the rest.
 Cut rules that describe default model behavior, collapse duplicates, remove dead references, and
 confirm claims about files, paths, and tools are still true. You have standing permission to
 shorten without asking; shorter is a success condition. Name the rotated guide in your ledger
-even when you cut nothing.
+even when you cut nothing. Give each of its `##` sections (or the whole guide, if it has none) an
+`*Enforced by:*` line: the mechanism by name, or "prose only". Add one when a new rule enters a
+section. It shows at a glance which rules nothing checks.
 
 **Edit one change at a time. Never rewrite a whole file in one pass.** Whole-file rewrites cause
 context collapse: compression feels like progress while it destroys the thing

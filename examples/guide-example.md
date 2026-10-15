@@ -12,8 +12,15 @@ help text.
 - **Never promise something the product doesn't do.** If there's no undo, don't imply one.
 - **Read it out loud once.** If you wouldn't say it to a person, rewrite it.
 
+*Enforced by:* prose only.
+
 ---
 
 Why this is a guide: all four only matter in one situation, and that
 situation is easy to recognize. The global file carries one line pointing here:
 `guides/customer-writing.md`: before any words a customer will read.
+
+The *Enforced by:* line names what catches a miss: a hook, a check, an agent, or "prose only"
+when nothing does but whoever reads the guide. It shows at a glance which rules nothing checks,
+and those are the first to turn into a mechanism when an audit says they're failing.
+`bin/check.sh` counts guide sections that are missing the line.
